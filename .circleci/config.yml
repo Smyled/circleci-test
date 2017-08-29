@@ -1,0 +1,75 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - setup_remote_docker
+      - checkout
+      - run:
+            command: ./build.sh
+
+  deploy_dev:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - run:
+            command: ./deploy.sh dev
+
+  deploy_stg:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - run:
+            command: ./deploy.sh stg
+
+  deploy_int:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - run:
+            command: ./deploy.sh int
+
+  deploy_sbx:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - run:
+            command: ./deploy.sh sbx
+
+  deploy_prd:
+    docker:
+      - image: circleci/golang:1.8
+    steps:
+      - run:
+            command: ./deploy.sh prd
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          context: org-global
+      - deploy_dev:
+          context: org-global
+          requires:
+            - build
+      - deploy_stg:
+          context: org-global
+          requires:
+            - deploy_dev
+      - deploy_int:
+          context: org-global
+          type: approval
+          requires:
+            - deploy_stg
+      - deploy_sbx:
+          context: org-global
+          type: approval
+          requires:
+            - deploy_stg
+      - deploy_prd:
+          context: org-global
+          type: approval
+          requires:
+            - deploy_stg
